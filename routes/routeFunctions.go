@@ -23,6 +23,7 @@ var (
 	databits int
 	stopbits int
 	parity   string
+	timeout  int
 
 	message string
 )
@@ -91,6 +92,7 @@ func writeToSerial(data []byte) error {
 	flag.IntVar(&stopbits, "s", 1, "stop bits")
 	flag.StringVar(&parity, "p", "N", "parity (N/E/O)")
 	flag.StringVar(&message, "m", "serial", "message")
+	flag.IntVar(&timeout, "t", 30, "timeout")
 	flag.Parse()
 	config := serial.Config{
 		Address:  address,
@@ -98,7 +100,7 @@ func writeToSerial(data []byte) error {
 		DataBits: databits,
 		StopBits: stopbits,
 		Parity:   parity,
-		Timeout:  60 * time.Second,
+		Timeout:  time.Duration(timeout) * time.Second,
 	}
 	log.Println("Data size: ", len(data))
 	log.Printf("connecting %+v", config)
