@@ -106,7 +106,8 @@ func writeToSerial(data []byte) error {
 	log.Printf("connecting %+v", config)
 	port, err := serial.Open(&config)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return err
 	}
 	log.Println("connected")
 	defer func() {
@@ -118,11 +119,11 @@ func writeToSerial(data []byte) error {
 	}()
 
 	if _, err = port.Write([]byte(data)); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 	if _, err = io.Copy(os.Stdout, port); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		return err
 	}
 	return err
