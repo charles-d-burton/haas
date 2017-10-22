@@ -2,6 +2,7 @@ package routes
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"haas/datastores"
 	"haas/static"
@@ -14,6 +15,16 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/goburrow/serial"
+)
+
+var (
+	address  string
+	baudrate int
+	databits int
+	stopbits int
+	parity   string
+
+	message string
 )
 
 func StaticHandler(rw http.ResponseWriter, req *http.Request) {
@@ -61,24 +72,33 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 		err := b.Put([]byte(header.Filename), out.Bytes())
 		return err
 	})
-	writeToSerial(out.Bytes())
+	err = writeToSerial(out.Bytes())
 	out.Reset()
 	if err != nil {
 		log.Println(err)
+		fmt.Fprintf(w, "Problem sending file: ")
+		fmt.Fprintf(w, header.Filename)
 	}
 
 	fmt.Fprintf(w, "File uploaded successfully : ")
 	fmt.Fprintf(w, header.Filename)
 }
 
-func writeToSerial(data []byte) {
+func writeToSerial(data []byte) error {
+	flag.StringVar(&address, "a", "/dev/ttyS0", "address")
+	flag.IntVar(&baudrate, "b", 115200, "baud rate")
+	flag.IntVar(&databits, "d", 8, "data bits")
+	flag.IntVar(&stopbits, "s", 1, "stop bits")
+	flag.StringVar(&parity, "p", "N", "parity (N/E/O)")
+	flag.StringVar(&message, "m", "serial", "message")
+	flag.Parse()
 	config := serial.Config{
-		Address:  "/dev/ttyS0",
-		BaudRate: 115200,
-		DataBits: 8,
-		StopBits: 1,
-		Parity:   "N",
-		Timeout:  120 * time.Second,
+		Address:  address,
+		BaudRate: baudrate,
+		DataBits: databits,
+		StopBits: stopbits,
+		Parity:   parity,
+		Timeout:  60 * time.Second,
 	}
 	log.Println("Data size: ", len(data))
 	log.Printf("connecting %+v", config)
@@ -97,10 +117,13 @@ func writeToSerial(data []byte) {
 
 	if _, err = port.Write([]byte(data)); err != nil {
 		log.Fatal(err)
+		return err
 	}
 	if _, err = io.Copy(os.Stdout, port); err != nil {
 		log.Fatal(err)
+		return err
 	}
+	return err
 }
 
 // formatRequest generates ascii representation of a request
