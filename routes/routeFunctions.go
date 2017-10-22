@@ -79,10 +79,10 @@ func FileHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		fmt.Fprintf(w, "Problem sending file: ")
 		fmt.Fprintf(w, header.Filename)
+	} else {
+		fmt.Fprintf(w, "File uploaded successfully : ")
+		fmt.Fprintf(w, header.Filename)
 	}
-
-	fmt.Fprintf(w, "File uploaded successfully : ")
-	fmt.Fprintf(w, header.Filename)
 }
 
 func writeToSerial(data []byte) error {
